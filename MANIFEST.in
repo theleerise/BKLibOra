@@ -1,0 +1,15 @@
+# Incluir archivos comunes
+include README.md
+include LICENSE
+include requirements.txt
+
+# Incluir todos los archivos Python en los directorios BKOraConnect, BKOraManager y BKOraModel
+recursive-include BKLibOra *.py
+recursive-include BKLibOra *.txt
+recursive-include BKLibOra *.ini
+recursive-include BKLibOra *.cfg
+
+# Excluir archivos temporales o de compilación
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude __pycache__/
