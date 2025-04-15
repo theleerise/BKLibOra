@@ -75,7 +75,7 @@ class BKOraManager:
             list[dict]: Lista de filas como diccionarios (clave=nombre de columna).
         """
         with self.session_scope() as session:
-            result = session.execute(query, params or {})
+            result = session.execute(text(query), params or {})
             keys = result.keys()
             return [dict(zip(keys, row)) for row in result]
 
@@ -91,7 +91,7 @@ class BKOraManager:
             dict | None: Fila como diccionario o None si no hay resultados.
         """
         with self.session_scope() as session:
-            result = session.execute(query, params or {})
+            result = session.execute(text(query), params or {})
             row = result.fetchone()
             if row:
                 return dict(zip(result.keys(), row))
