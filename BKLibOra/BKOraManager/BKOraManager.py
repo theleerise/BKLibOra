@@ -13,7 +13,7 @@ Dependencias:
     - sqlalchemy (a través del conector proporcionado)
 """
 
-
+from sqlalchemy.sql import text
 from contextlib import contextmanager
 
 
@@ -106,4 +106,4 @@ class BKOraManager:
             params (dict, optional): Parámetros de la consulta.
         """
         with self.session_scope() as session:
-            session.execute(query, params or {})
+            session.execute(text(query), params or {})
