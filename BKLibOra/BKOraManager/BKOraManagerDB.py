@@ -40,7 +40,7 @@ from BKLibOra.BKOraManager import BKOraManager
 from abc import ABC, abstractmethod
 
 
-class BKOraManagerDB(BKOraManager, ABC):
+class BKOraManagerDB(BKOraManager):
     """
     Clase base abstracta para manejar operaciones CRUD sobre una tabla Oracle usando un modelo.
 
