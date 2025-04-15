@@ -36,7 +36,7 @@ Métodos abstractos que deben ser implementados por la subclase:
     - get_sql_delete()
 """
 
-from BKLibOra.BKOraManager import BKOraManager
+from BKLibOra.BKOraManager.BKOraManager import BKOraManager
 from abc import ABC, abstractmethod
 
 
