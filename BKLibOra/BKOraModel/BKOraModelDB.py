@@ -21,3 +21,17 @@ class BKOraModelDB:
     @classmethod
     def from_list(cls, data_list):
         return [cls.from_dict(item) for item in data_list]
+    
+    def __repr__(self):
+        pk_parts = []
+        for attr_name in dir(self):
+            attr = getattr(self.__class__, attr_name, None)
+            if hasattr(attr, "primary_key") and attr.primary_key:
+                value = getattr(self, attr_name, None)
+                pk_parts.append(f"{attr_name}={value}")
+
+        if pk_parts:
+            pk_str = ", ".join(pk_parts)
+            return f"{self.__class__.__name__}: {pk_str}"
+        else:
+            return f"{self.__class__.__name__}"
