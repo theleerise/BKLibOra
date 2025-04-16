@@ -18,10 +18,22 @@ Atributos:
             - "default_port" (int): Puerto por defecto del servicio Oracle.
             - "default_host" (str): Host por defecto (normalmente `localhost`).
 """
+import cx_Oracle
 
 config_conn_lib = {
     "oracledb": "oracle+oracledb",
     "cx_oracle": "oracle+cx_oracle",
     "default_port": 1521,
     "default_host": "localhost"
+}
+
+roles_base = {
+    "SYSDBA" : cx_Oracle.SYSDBA,
+    "SYSOPER" : cx_Oracle.SYSOPER,
+    "SYSASM" : cx_Oracle.SYSASM,
+    "SYSBKP" : cx_Oracle.SYSBKP,
+    "SYSDGD" : cx_Oracle.SYSDGD,
+    "SYSKMT" : cx_Oracle.SYSKMT,
+    "SYSRAC" : cx_Oracle.SYSRAC,
+    "DEFAULT" : cx_Oracle.DEFAULT_AUTH,  
 }

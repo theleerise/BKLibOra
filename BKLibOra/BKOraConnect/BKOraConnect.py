@@ -20,7 +20,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import cx_Oracle
 
-from BKLibOra.config import config_conn_lib as conn
+from BKLibOra.config import config_conn_lib as conn, roles_base as rol
 
 
 class BKOraConnect:
@@ -48,7 +48,9 @@ class BKOraConnect:
     """
 
     def __init__(self, user, password, host=conn.get("default_host"), port=conn.get("default_port"),
-                 service_name=None, sid=None, tns_alias=None, use_thick=False):
+                 service_name=None, sid=None, tns_alias=None, use_thick=False, role_mode="DEFAULT"):
+        connection_args = {}
+        
         if use_thick:
             import oracledb
             oracledb.init_oracle_client()
@@ -64,9 +66,12 @@ class BKOraConnect:
             dsn = cx_Oracle.makedsn(host, port, sid=sid)
         else:
             raise ValueError("Debes proporcionar al menos service_name, sid o tns_alias")
+        
+        if role_mode is not None:
+            connection_args["mode"] = rol.get(role_mode)
 
         connection_url = f"{dialect}://{user}:{password}@{dsn}"
-        self.engine = create_engine(connection_url, pool_pre_ping=True)
+        self.engine = create_engine(connection_url, connect_args=connection_args, pool_pre_ping=True)
         self.Session = sessionmaker(bind=self.engine)
 
     def get_session(self):
