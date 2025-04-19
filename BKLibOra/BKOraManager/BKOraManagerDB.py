@@ -136,12 +136,12 @@ class BKOraManagerDB(BKOraManager):
             objmodel (object): Instancia del modelo a insertar.
         """
         sql, _ = self.get_sql_insert()
-        params = objmodel.to_dict()
         if hasattr(self, "before_insert"):
-            self.before_insert(params)
+            objmodel = self.before_insert(params)
+        params = objmodel.to_dict()
         self.execute(sql, params)
         if hasattr(self, "after_insert"):
-            self.after_insert(params)
+            objmodel = self.after_insert(params)
 
     def update_model(self, objmodel=None):
         """
@@ -151,12 +151,12 @@ class BKOraManagerDB(BKOraManager):
             objmodel (object): Instancia del modelo a actualizar.
         """
         sql, _ = self.get_sql_update()
-        params = objmodel.to_dict()
         if hasattr(self, "before_update"):
-            self.before_update(params)
+            objmodel = self.before_update(params)
+        params = objmodel.to_dict()
         self.execute(sql, params)
         if hasattr(self, "after_update"):
-            self.after_update(params)
+            objmodel = self.after_update(params)
 
     def delete_model(self, objmodel=None):
         """
@@ -166,36 +166,36 @@ class BKOraManagerDB(BKOraManager):
             objmodel (object): Instancia del modelo a eliminar.
         """
         sql, _ = self.get_sql_delete()
-        params = objmodel.to_dict()
         if hasattr(self, "before_delete"):
-            self.before_delete(params)
+            objmodel = self.before_delete(params)
+        params = objmodel.to_dict()
         self.execute(sql, params)
         if hasattr(self, "after_delete"):
             self.after_delete(params)
 
-    def before_insert(self, params):
+    def before_insert(self, objmodel):
         """Hook opcional: lógica previa a un INSERT."""
-        pass
+        return objmodel
 
-    def after_insert(self, params):
+    def after_insert(self, objmodel):
         """Hook opcional: lógica posterior a un INSERT."""
-        pass
+        return objmodel
 
-    def before_update(self, params):
+    def before_update(self, objmodel):
         """Hook opcional: lógica previa a un UPDATE."""
-        pass
+        return objmodel
 
-    def after_update(self, params):
+    def after_update(self, objmodel):
         """Hook opcional: lógica posterior a un UPDATE."""
-        pass
+        return objmodel
 
-    def before_delete(self, params):
+    def before_delete(self, objmodel):
         """Hook opcional: lógica previa a un DELETE."""
-        pass
+        return objmodel
 
-    def after_delete(self, params):
+    def after_delete(self, objmodel):
         """Hook opcional: lógica posterior a un DELETE."""
-        pass
+        return objmodel
     
     def call_procedure(self, proc_name, params=None):
         """
