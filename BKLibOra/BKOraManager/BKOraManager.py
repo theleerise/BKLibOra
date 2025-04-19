@@ -63,7 +63,7 @@ class BKOraManager:
         finally:
             session.close()
 
-    def fetch_all(self, query, params=None):
+    def fetch_all(self, query, params=None, sess=None):
         """
         Ejecuta una consulta SQL y devuelve todos los resultados.
 
@@ -74,12 +74,17 @@ class BKOraManager:
         Returns:
             list[dict]: Lista de filas como diccionarios (clave=nombre de columna).
         """
-        with self.session_scope() as session:
-            result = session.execute(text(query), params or {})
-            keys = result.keys()
-            return [dict(zip(keys, row)) for row in result]
+        result=[]
+        
+        if sess:
+            result = sess.execute(text(query), params or {})
+        else:
+            with self.session_scope() as session:
+                result = session.execute(text(query), params or {})
+        keys = result.keys()
+        return [dict(zip(keys, row)) for row in result]
 
-    def fetch_one(self, query, params=None):
+    def fetch_one(self, query, params=None, sess=None):
         """
         Ejecuta una consulta SQL y devuelve una única fila como diccionario.
 
@@ -90,14 +95,17 @@ class BKOraManager:
         Returns:
             dict | None: Fila como diccionario o None si no hay resultados.
         """
-        with self.session_scope() as session:
-            result = session.execute(text(query), params or {})
-            row = result.fetchone()
-            if row:
-                return dict(zip(result.keys(), row))
-            return None
+        if sess:
+            sess.execute(text(query), params or {})
+        else:
+            with self.session_scope() as session:
+                result = session.execute(text(query), params or {})
+        row = result.fetchone()
+        if row:
+            return dict(zip(result.keys(), row))
+        return None
 
-    def execute(self, query, params=None):
+    def execute(self, query, params=None, sess=None):
         """
         Ejecuta una consulta SQL sin devolver resultados (ideal para INSERT, UPDATE, DELETE).
 
@@ -105,5 +113,8 @@ class BKOraManager:
             query (str): Consulta SQL.
             params (dict, optional): Parámetros de la consulta.
         """
-        with self.session_scope() as session:
+        if sess:
             session.execute(text(query), params or {})
+        else:
+            with self.session_scope() as session:
+                session.execute(text(query), params or {})

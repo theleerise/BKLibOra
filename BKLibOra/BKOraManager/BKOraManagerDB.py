@@ -117,7 +117,7 @@ class BKOraManagerDB(BKOraManager):
         """
         pass
 
-    def getlist(self):
+    def getlist(self, session=None):
         """
         Ejecuta la consulta SELECT definida por `get_sql_select()` y convierte los resultados a modelos.
 
@@ -125,10 +125,10 @@ class BKOraManagerDB(BKOraManager):
             list[object]: Lista de instancias del modelo definido.
         """
         sql, params = self.get_sql_select()
-        results = self.fetch_all(sql, params)
+        results = self.fetch_all(sql, params, sess=session)
         return self.model.from_list(results)
 
-    def insert_model(self, objmodel=None):
+    def insert_model(self, objmodel=None, session=None):
         """
         Inserta una instancia del modelo en la base de datos.
 
@@ -137,13 +137,13 @@ class BKOraManagerDB(BKOraManager):
         """
         sql, _ = self.get_sql_insert()
         if hasattr(self, "before_insert"):
-            objmodel = self.before_insert(params)
+            objmodel = self.before_insert(objmodel, session=session)
         params = objmodel.to_dict()
-        self.execute(sql, params)
+        self.execute(sql, params, session=session)
         if hasattr(self, "after_insert"):
-            objmodel = self.after_insert(params)
+            objmodel = self.after_insert(objmodel, session=session)
 
-    def update_model(self, objmodel=None):
+    def update_model(self, objmodel=None, session=None):
         """
         Actualiza una instancia del modelo en la base de datos.
 
@@ -152,13 +152,13 @@ class BKOraManagerDB(BKOraManager):
         """
         sql, _ = self.get_sql_update()
         if hasattr(self, "before_update"):
-            objmodel = self.before_update(params)
+            objmodel = self.before_update(objmodel, session=session)
         params = objmodel.to_dict()
-        self.execute(sql, params)
+        self.execute(sql, params, session=session)
         if hasattr(self, "after_update"):
-            objmodel = self.after_update(params)
+            objmodel = self.after_update(objmodel, session=session)
 
-    def delete_model(self, objmodel=None):
+    def delete_model(self, objmodel=None, session=None):
         """
         Elimina una instancia del modelo en la base de datos.
 
@@ -167,37 +167,37 @@ class BKOraManagerDB(BKOraManager):
         """
         sql, _ = self.get_sql_delete()
         if hasattr(self, "before_delete"):
-            objmodel = self.before_delete(params)
+            objmodel = self.before_delete(objmodel, session=session)
         params = objmodel.to_dict()
-        self.execute(sql, params)
+        self.execute(sql, params, session=session)
         if hasattr(self, "after_delete"):
-            self.after_delete(params)
+            self.after_delete(objmodel, session=session)
 
-    def before_insert(self, objmodel):
+    def before_insert(self, objmodel, session=None):
         """Hook opcional: lógica previa a un INSERT."""
         return objmodel
 
-    def after_insert(self, objmodel):
+    def after_insert(self, objmodel, session=None):
         """Hook opcional: lógica posterior a un INSERT."""
         return objmodel
 
-    def before_update(self, objmodel):
+    def before_update(self, objmodel, session=None):
         """Hook opcional: lógica previa a un UPDATE."""
         return objmodel
 
-    def after_update(self, objmodel):
+    def after_update(self, objmodel, session=None):
         """Hook opcional: lógica posterior a un UPDATE."""
         return objmodel
 
-    def before_delete(self, objmodel):
+    def before_delete(self, objmodel, session=None):
         """Hook opcional: lógica previa a un DELETE."""
         return objmodel
 
-    def after_delete(self, objmodel):
+    def after_delete(self, objmodel, session=None):
         """Hook opcional: lógica posterior a un DELETE."""
         return objmodel
     
-    def call_procedure(self, proc_name, params=None):
+    def call_procedure(self, proc_name, params=None, session=None):
         """
         Ejecuta un procedimiento almacenado en Oracle.
 
@@ -215,10 +215,13 @@ class BKOraManagerDB(BKOraManager):
         placeholders = ', '.join(f':{k}' for k in params)
         sql = f"BEGIN {proc_name}({placeholders}); END;"
 
-        with self.session_scope() as session:
+        if session:
             session.execute(sql, params)
+        else:
+            with self.session_scope() as session:
+                session.execute(sql, params)
 
-    def call_function(self, func_name, params=None):
+    def call_function(self, func_name, params=None, session=None):
         """
         Ejecuta una función almacenada que retorna un escalar.
 
@@ -236,5 +239,5 @@ class BKOraManagerDB(BKOraManager):
         placeholders = ', '.join(f':{k}' for k in params)
         sql = f"SELECT {func_name}({placeholders}) AS result FROM DUAL"
 
-        result = self.fetch_one(sql, params)
+        result = self.fetch_one(sql, params, sess=session)
         return result.get('result') if result else None
