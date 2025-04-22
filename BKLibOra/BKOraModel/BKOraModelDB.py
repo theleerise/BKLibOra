@@ -21,6 +21,20 @@ class BKOraModelDB:
     @classmethod
     def from_list(cls, data_list):
         return [cls.from_dict(item) for item in data_list]
+
+    @classmethod
+    def get_columns_info(cls):
+        columns_info = {}
+        for key, column in cls.__dict__.items():
+            # Identificamos columnas por tener ciertos atributos esperados
+            if hasattr(column, 'name') and hasattr(column, 'type'):
+                column_name = getattr(column, 'name', key) or key
+                # Tomamos todos los atributos públicos definidos en el objeto
+                info_dict = {k: v for k, v in vars(column).items() if not k.startswith('_')}
+                info_dict['attribute'] = key
+                columns_info[column_name] = info_dict
+        return columns_info
+
     
     def __repr__(self):
         pk_parts = []
