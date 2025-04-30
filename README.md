@@ -13,9 +13,46 @@ BKLibOra
 │       BKOraConnect.py
 │       __init__.py
 │
+├───BKOraDatabaseInfo
+│   ├───MgrdbAllPrimaryKey
+│   │       MgrdbAllPrimaryKey.py
+│   │       ModelAllPrimaryKey.py
+│   │
+│   ├───MgrdbAllSequences
+│   │       MgrdbAllSequences.py
+│   │       ModelAllSequences.py
+│   │
+│   ├───MgrdbAllSessionActive
+│   │       MgrdbAllSessionActive.py
+│   │       ModelAllSessionActive.py
+│   │
+│   ├───MgrdbAllTableDependencies
+│   │       MgrdbAllTableDependencies.py
+│   │       ModelAllTableDependencies.py
+│   │
+│   ├───MgrdbCurrentExecuteQuery
+│   │       MgrdbCurrentExecuteQuery.py
+│   │       ModelCurrentExecuteQuery.py
+│   │
+│   ├───MgrdbJobScheduler_DetailsWithProgramAndSchedule
+│   │       MgrdbJobScheduler_DetailsWithProgramAndSchedule.py
+│   │       ModelJobScheduler_DetailsWithProgramAndSchedule.py
+│   │
+│   ├───MgrdbJobScheduler_StatusWithErrorInfo
+│   │       MgrdbJobScheduler_StatusWithErrorInfo.py
+│   │       ModelJobScheduler_StatusWithErrorInfo.py
+│   │
+│   ├───MgrdbSessionLock
+│   │       MgrdbSessionLock.py
+│   │       ModelSessionLock.py
+│   │
+│   └───MgrdbTableStructure
+│           MgrdbTableStructure.py
+│           ModelTableStructure.py
+│
 ├───BKOraManager
 │       BKOraManager.py
-│       BKOraManagerDB.PY
+│       BKOraManagerDB.py
 │       __init__.py
 │
 └───BKOraModel
