@@ -95,8 +95,10 @@ class BKOraManager:
         Returns:
             dict | None: Fila como diccionario o None si no hay resultados.
         """
+        result=[]
+        
         if sess:
-            sess.execute(text(query), params or {})
+            result = sess.execute(text(query), params or {})
         else:
             with self.session_scope() as session:
                 result = session.execute(text(query), params or {})
@@ -114,7 +116,7 @@ class BKOraManager:
             params (dict, optional): Parámetros de la consulta.
         """
         if sess:
-            session.execute(text(query), params or {})
+            sess.execute(text(query), params or {})
         else:
             with self.session_scope() as session:
                 session.execute(text(query), params or {})
