@@ -37,7 +37,10 @@ Métodos abstractos que deben ser implementados por la subclase:
 """
 
 from BKLibOra.BKOraManager.BKOraManager import BKOraManager
+from BKLibOra.BKOraManager.BKOraManager_utils import counter_row_query, range_row_query
+from sqlalchemy.orm import sessionmaker
 from abc import ABC, abstractmethod
+import time
 
 
 class BKOraManagerDB(BKOraManager):
@@ -50,6 +53,8 @@ class BKOraManagerDB(BKOraManager):
     Args:
         connector (BKOraConnect): Conector a la base de datos.
         model (object): Clase modelo con métodos `to_dict()` y `from_list()`.
+        args (list)
+        kwargs (dict)
 
     Métodos abstractos:
         get_sql_select(): Devuelve la sentencia SELECT y parámetros asociados.
@@ -65,8 +70,12 @@ class BKOraManagerDB(BKOraManager):
         before_delete(params): Lógica previa a la ejecución de un DELETE.
         after_delete(params): Lógica posterior a la ejecución de un DELETE.
     """
+    DEFAULT_KWARGS = {
+        "rows_page": 20,
+        "row_page_tab" : 5
+    }
 
-    def __init__(self, connector, model):
+    def __init__(self, connector, model, *args, **kwargs):
         """
         Inicializa una instancia de BKOraManagerDB.
 
@@ -76,6 +85,8 @@ class BKOraManagerDB(BKOraManager):
         """
         super().__init__(connector=connector)
         self.model = model
+        self.args = args
+        self.kwargs = self.DEFAULT_KWARGS | kwargs
 
     @abstractmethod
     def get_sql_select(self):
@@ -117,7 +128,7 @@ class BKOraManagerDB(BKOraManager):
         """
         pass
 
-    def getlist(self, session=None):
+    def getlist(self, session: sessionmaker|None=None) -> dict:
         """
         Ejecuta la consulta SELECT definida por `get_sql_select()` y convierte los resultados a modelos.
 
@@ -127,8 +138,255 @@ class BKOraManagerDB(BKOraManager):
         sql, params = self.get_sql_select()
         results = self.fetch_all(sql, params, sess=session)
         return self.model.from_list(results)
+    
+    def getlist_numerated(self, session: sessionmaker|None=None) -> dict:
+        """
+        Devuelve todos los registros que cumple la consulta, el total de filas
+        y métricas de tiempo de ejecución.
 
-    def insert_model(self, objmodel=None, session=None):
+        El método ejecuta la sentencia SQL generada por ``get_sql_select()``,
+        transforma el resultado crudo en instancias del modelo mediante
+        ``self.model.from_list`` y calcula:
+
+        * ``count``: número total de filas que devuelve la consulta.
+        * ``time_result``: tiempo en obtener y mapear los resultados.
+        * ``time_count``: tiempo en calcular el total de filas.
+        * ``time_exec``: tiempo total del método.
+
+        Args:
+            session (sessionmaker | None, opcional):
+                Sesión de SQLAlchemy a reutilizar.  
+                Si ``None`` se usa la configuración por defecto
+                interna de ``fetch_all``.
+
+        Returns:
+            dict:  
+                Diccionario con las claves:
+
+                * ``result`` (list[Model]): lista de instancias del modelo.
+                * ``result_set`` (Sequence[RowMapping]): datos crudos devueltos
+                  por el driver SQL.
+                * ``count`` (int): total de registros.
+                * ``time`` (dict): métricas de rendimiento descritas arriba.
+
+        See Also:
+            * :py:meth:`get_sql_select`
+            * :py:meth:`fetch_all`
+            * :py:meth:`model.from_list`
+        """
+
+        time_exec_init = time.perf_counter()
+
+        sql, params = self.get_sql_select()
+        counter_query = counter_row_query(sql)
+
+        time_count_init = time.perf_counter()
+        count = self.fetch_all(counter_query, params, sess=session)
+        time_count = time.perf_counter() - time_count_init
+
+        time_result_init = time.perf_counter()
+        result_set = self.fetch_all(sql, params, sess=session)
+        result_models = self.model.from_list(result_set)
+        time_result = time.perf_counter() - time_result_init
+
+        time_exec = time.perf_counter() - time_exec_init
+
+        result_dict = {
+            "result": result_models,
+            "result_set": result_set,
+            "count": count,
+            "time": {
+                "time_result": time_result,
+                "time_count": time_count,
+                "time_exec": time_exec,
+            }
+        }
+
+        return result_dict
+
+    def getlist_paginated(self, session: sessionmaker|None=None) -> dict:
+        """
+        Obtiene todos los registros pero los divide en páginas de tamaño fijo.
+
+        El tamaño de página se lee de ``self.kwargs["rows_page"]``.  El flujo
+        de trabajo es idéntico a :py:meth:`getlist_numerated` con la diferencia
+        de que los resultados se dividen en chunks:
+
+        .. code-block:: python
+
+            chunks = [
+                result_models[i : i + rows_page]
+                for i in range(0, len(result_models), rows_page)
+            ]
+
+        Args:
+            session (sessionmaker | None, opcional):
+                Sesión de SQLAlchemy a reutilizar.
+
+        Returns:
+            dict:  
+                * ``result`` (list[list[Model]]): lista de páginas; cada página
+                  es una lista de instancias del modelo.
+                * ``result_set`` (Sequence[RowMapping])
+                * ``count`` (int)
+                * ``time`` (dict): incluye además ``time_page`` con el tiempo
+                  empleado en paginar.
+
+        Raises:
+            KeyError: si ``"rows_page"`` no está presente en ``self.kwargs``.
+        """
+
+        time_exec_init = time.perf_counter()
+
+        sql, params = self.get_sql_select()
+        counter_query = counter_row_query(sql)
+
+        time_count_init = time.perf_counter()
+        count = self.fetch_all(counter_query, params, sess=session)
+        time_count = time.perf_counter() - time_count_init
+
+        time_result_init = time.perf_counter()
+        result_set = self.fetch_all(sql, params, sess=session)
+        result_models = self.model.from_list(result_set)
+        time_result = time.perf_counter() - time_result_init
+
+        time_page_init = time.perf_counter()
+        chunks = [result_models[i:i + self.kwargs.get("rows_page")]
+                  for i in range(0, len(result_models), self.kwargs.get("rows_page"))]
+        time_page = time.perf_counter() - time_page_init
+
+        time_exec = time.perf_counter() - time_exec_init
+
+        result_dict = {
+            "result": chunks,
+            "result_set": result_set,
+            "count": count,
+            "time": {
+                "time_page": time_page,
+                "time_result": time_result,
+                "time_count": time_count,
+                "time_exec": time_exec,
+            }
+        }
+
+        return result_dict
+    
+    def getlist_page(self, page_range: dict|None=None, session: sessionmaker|None=None) -> dict:
+        """
+        Devuelve solo la página solicitada mediante límites ``OFFSET``/``LIMIT``.
+
+        El rango por defecto selecciona desde la fila 0 hasta
+        ``self.kwargs["rows_page"]`` (excluido el límite).
+
+        Args:
+            page_range (dict | None, opcional):
+                Diccionario con las claves:
+
+                * ``page_init`` (int): índice inicial —‐corresponde a *OFFSET*.
+                * ``page_fin`` (int): número de filas a devolver —‐corresponde a
+                  *LIMIT*.
+
+                Si es ``None`` se utiliza el rango por defecto indicado arriba.
+            session (sessionmaker | None, opcional):
+                Sesión de SQLAlchemy a reutilizar.
+
+        Returns:
+            dict: estructura análoga a :py:meth:`getlist_numerated`.
+
+        Nota:
+            El contador ``count`` se calcula **contra la sub-consulta paginada**,
+            no contra la consulta original sin límites.
+        """
+
+        time_exec_init = time.perf_counter()
+
+        if not page_range:
+            page_range = {
+                "page_init": 0,
+                "page_fin": self.kwargs.get("rows_page"),
+            }
+
+        sql, params = self.get_sql_select()
+        sql = range_row_query(sql, offset=page_range.get("page_init"), limit=page_range.get("page_fin"))
+        counter_query = counter_row_query(sql)
+
+        time_count_init = time.perf_counter()
+        count = self.fetch_all(counter_query, params, sess=session)
+        time_count = time.perf_counter() - time_count_init
+
+        time_result_init = time.perf_counter()
+        result_set = self.fetch_all(sql, params, sess=session)
+        result_models = self.model.from_list(result_set)
+        time_result = time.perf_counter() - time_result_init
+
+        time_exec = time.perf_counter() - time_exec_init
+
+        result_dict = {
+            "result": result_models,
+            "result_set": result_set,
+            "count": count,
+            "time": {
+                "time_result": time_result,
+                "time_count": time_count,
+                "time_exec": time_exec,
+            }
+        }
+
+        return result_dict
+
+    def getlist_range(self, _range: tuple|None=None, session: sessionmaker|None=None):
+        """
+        Recupera los registros comprendidos en el rango dado
+        (basado en *OFFSET* y *LIMIT*).
+
+        Args:
+            _range (tuple[int, int] | None):
+                Tupla ``(offset, limit)``.  Coincide conceptualmente con
+                ``page_range`` pero se pasa como tupla.
+            session (sessionmaker | None, opcional):
+                Sesión de SQLAlchemy a reutilizar.
+
+        Returns:
+            dict: estructura análoga a :py:meth:`getlist_numerated`.
+
+        Raises:
+            ValueError: si ``_range`` es ``None`` o no tiene exactamente
+            dos elementos.
+        """
+
+        time_exec_init = time.perf_counter()
+
+        start, fin = _range
+
+        sql, params = self.get_sql_select()
+        sql = range_row_query(sql, offset=start, limit=fin)
+        counter_query = counter_row_query(sql)
+
+        time_count_init = time.perf_counter()
+        count = self.fetch_all(counter_query, params, sess=session)
+        time_count = time.perf_counter() - time_count_init
+
+        time_result_init = time.perf_counter()
+        result_set = self.fetch_all(sql, params, sess=session)
+        result_models = self.model.from_list(result_set)
+        time_result = time.perf_counter() - time_result_init
+
+        time_exec = time.perf_counter() - time_exec_init
+
+        result_dict = {
+            "result": result_models,
+            "result_set": result_set,
+            "count": count,
+            "time": {
+                "time_result": time_result,
+                "time_count": time_count,
+                "time_exec": time_exec,
+            }
+        }
+
+        return result_dict
+
+    def insert_model(self, objmodel: object|None=None, session: sessionmaker|None=None):
         """
         Inserta una instancia del modelo en la base de datos.
 
@@ -143,7 +401,7 @@ class BKOraManagerDB(BKOraManager):
         if hasattr(self, "after_insert"):
             objmodel = self.after_insert(objmodel, session=session)
 
-    def update_model(self, objmodel=None, session=None):
+    def update_model(self, objmodel: object|None=None, session: sessionmaker|None=None):
         """
         Actualiza una instancia del modelo en la base de datos.
 
@@ -158,7 +416,7 @@ class BKOraManagerDB(BKOraManager):
         if hasattr(self, "after_update"):
             objmodel = self.after_update(objmodel, session=session)
 
-    def delete_model(self, objmodel=None, session=None):
+    def delete_model(self, objmodel: object|None=None, session: sessionmaker|None=None):
         """
         Elimina una instancia del modelo en la base de datos.
 
@@ -173,31 +431,31 @@ class BKOraManagerDB(BKOraManager):
         if hasattr(self, "after_delete"):
             self.after_delete(objmodel, session=session)
 
-    def before_insert(self, objmodel, session=None):
+    def before_insert(self, objmodel: object|None=None, session: sessionmaker|None=None):
         """Hook opcional: lógica previa a un INSERT."""
         return objmodel
 
-    def after_insert(self, objmodel, session=None):
+    def after_insert(self, objmodel: object|None=None, session: sessionmaker|None=None):
         """Hook opcional: lógica posterior a un INSERT."""
         return objmodel
 
-    def before_update(self, objmodel, session=None):
+    def before_update(self, objmodel: object|None=None, session: sessionmaker|None=None):
         """Hook opcional: lógica previa a un UPDATE."""
         return objmodel
 
-    def after_update(self, objmodel, session=None):
+    def after_update(self, objmodel: object|None=None, session: sessionmaker|None=None):
         """Hook opcional: lógica posterior a un UPDATE."""
         return objmodel
 
-    def before_delete(self, objmodel, session=None):
+    def before_delete(self, objmodel: object|None=None, session: sessionmaker|None=None):
         """Hook opcional: lógica previa a un DELETE."""
         return objmodel
 
-    def after_delete(self, objmodel, session=None):
+    def after_delete(self, objmodel: object|None=None, session: sessionmaker|None=None):
         """Hook opcional: lógica posterior a un DELETE."""
         return objmodel
     
-    def call_procedure(self, proc_name, params=None, session=None):
+    def call_procedure(self, proc_name:str, params: dict|None=None, session: sessionmaker|None=None):
         """
         Ejecuta un procedimiento almacenado en Oracle.
 
@@ -221,7 +479,7 @@ class BKOraManagerDB(BKOraManager):
             with self.session_scope() as session:
                 session.execute(sql, params)
 
-    def call_function(self, func_name, params=None, session=None):
+    def call_function(self, func_name:str, params: dict|None=None, session: sessionmaker|None=None):
         """
         Ejecuta una función almacenada que retorna un escalar.
 
