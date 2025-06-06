@@ -1,28 +1,42 @@
+from BKLibOra.utils import get_byte_size
+
 class BKString:
-    def __init__(self, name :str
+
+    MAX_BYTES = 4000
+    
+    def __init__(self
+                 , name :str
                  , value :str=None
-                 , min_lengt :int=0
-                 , max_length :int=4000
+                 , large :int=MAX_BYTES
+                 , min_length :int=0
                  , nullable :bool=True
-                 , doc :str=None) -> BkString:
+                 , doc :str=None
+                 , _encoding :str="utf-8"):
         self.value = value
         self.name = name
-        self.max_length = max_length
+        self.large = large
         self.min_length = min_length
         self.nullable = nullable
         self.doc = doc
-    
-    def _validate_init(self):
-        pass
+        self.encoding = _encoding
+
+        self.validate_init()
+
+    def validate_init(self):
+        self.__validate_value()
     
     def __validate_value(self):
         if self.value is not None:
             if not isinstance(self.value, str):
                 raise TypeError(f"Expected str, got {type(self.value).__name__}")
-            if self.max_length is not None and len(self.value) > self.max_length:
-                raise ValueError(f"String length exceeds maximum of {self.max_length}")
             if self.min_length is not None and len(self.value) < self.min_length:
                 raise ValueError(f"String length is less than minimum of {self.min_length}")
+            
+            _bytes = get_byte_size(data=self.value, encoding=self.encoding)
+
+            if (_bytes > self.large) or (_bytes > BKString.MAX_BYTES):
+                raise ValueError(f"String length exceeds maximum of {self.large} bytes")
+
 
     def __str__(self):
         return str(self.value) if self.value is not None else "None"
@@ -61,4 +75,3 @@ class BKBytes:
 
     def __str__(self):
         return str(self.value) if self.value is not None else "None"
-    
