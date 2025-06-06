@@ -37,3 +37,12 @@ roles_base = {
     "SYSRAC" : cx_Oracle.SYSRAC,
     "DEFAULT" : cx_Oracle.DEFAULT_AUTH,  
 }
+
+MAX_VALUES = {
+    "string": 4000,  # Máximo de caracteres para cadenas
+    "number": 38,    # Máximo de dígitos para números
+    "date": None,    # No hay límite específico para fechas
+    "timestamp": None,  # No hay límite específico para timestamps
+    "clob": None,    # CLOB puede ser muy grande, sin límite específico
+    "blob": None     # BLOB puede ser muy grande, sin límite específico
+}
