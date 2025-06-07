@@ -181,7 +181,7 @@ class BKOraManagerDB(BKOraManager):
         counter_query = counter_row_query(sql)
 
         time_count_init = time.perf_counter()
-        count = self.fetch_all(counter_query, params, sess=session)
+        count = self.fetch_one(counter_query, params, sess=session)
         time_count = time.perf_counter() - time_count_init
 
         time_result_init = time.perf_counter()
@@ -194,7 +194,7 @@ class BKOraManagerDB(BKOraManager):
         result_dict = {
             "result": result_models,
             "result_set": result_set,
-            "count": count,
+            "count": count.get("counter"),
             "time": {
                 "time_result": time_result,
                 "time_count": time_count,
@@ -242,7 +242,7 @@ class BKOraManagerDB(BKOraManager):
         counter_query = counter_row_query(sql)
 
         time_count_init = time.perf_counter()
-        count = self.fetch_all(counter_query, params, sess=session)
+        count = self.fetch_one(counter_query, params, sess=session)
         time_count = time.perf_counter() - time_count_init
 
         time_result_init = time.perf_counter()
@@ -260,7 +260,7 @@ class BKOraManagerDB(BKOraManager):
         result_dict = {
             "result": chunks,
             "result_set": result_set,
-            "count": count,
+            "count": count.get("counter"),
             "time": {
                 "time_page": time_page,
                 "time_result": time_result,
@@ -307,14 +307,14 @@ class BKOraManagerDB(BKOraManager):
             }
 
         sql, params = self.get_sql_select()
-        sql = range_row_query(sql, offset=page_range.get("page_init"), limit=page_range.get("page_fin"))
         counter_query = counter_row_query(sql)
 
         time_count_init = time.perf_counter()
-        count = self.fetch_all(counter_query, params, sess=session)
+        count = self.fetch_one(counter_query, params, sess=session)
         time_count = time.perf_counter() - time_count_init
 
         time_result_init = time.perf_counter()
+        sql = range_row_query(sql, offset=page_range.get("page_init"), limit=page_range.get("page_fin"))
         result_set = self.fetch_all(sql, params, sess=session)
         result_models = self.model.from_list(result_set)
         time_result = time.perf_counter() - time_result_init
@@ -324,7 +324,7 @@ class BKOraManagerDB(BKOraManager):
         result_dict = {
             "result": result_models,
             "result_set": result_set,
-            "count": count,
+            "count": count.get("counter"),
             "time": {
                 "time_result": time_result,
                 "time_count": time_count,
@@ -359,14 +359,14 @@ class BKOraManagerDB(BKOraManager):
         start, fin = _range
 
         sql, params = self.get_sql_select()
-        sql = range_row_query(sql, offset=start, limit=fin)
         counter_query = counter_row_query(sql)
 
         time_count_init = time.perf_counter()
-        count = self.fetch_all(counter_query, params, sess=session)
+        count = self.fetch_one(counter_query, params, sess=session)
         time_count = time.perf_counter() - time_count_init
 
         time_result_init = time.perf_counter()
+        sql = range_row_query(sql, offset=start, limit=fin)
         result_set = self.fetch_all(sql, params, sess=session)
         result_models = self.model.from_list(result_set)
         time_result = time.perf_counter() - time_result_init
@@ -376,7 +376,7 @@ class BKOraManagerDB(BKOraManager):
         result_dict = {
             "result": result_models,
             "result_set": result_set,
-            "count": count,
+            "count": count.get("counter"),
             "time": {
                 "time_result": time_result,
                 "time_count": time_count,

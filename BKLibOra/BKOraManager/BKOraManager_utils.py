@@ -22,7 +22,7 @@ def counter_row_query(query: str) -> str:
         ) QUERY_COUNT
     """
     format_query = f"""
-        SELECT COUNT(*) FROM (
+        SELECT COUNT(*) AS COUNTER FROM (
             {query}
         ) QUERY_COUNT
     """
