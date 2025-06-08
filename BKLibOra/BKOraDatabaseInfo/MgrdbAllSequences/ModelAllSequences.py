@@ -1,5 +1,5 @@
 from BKLibOra.BKOraModel.BKOraModelDB import BKOraModelDB
-from BKLibOra.BKOraModel.BKOraModel_utils.BKOraColums import BKOraColumn
+from BKLibOra.BKOraModel.BKOraColums import BKOraColumn
 
 class ModelAllSequences(BKOraModelDB):
     sequence_owner = BKOraColumn(name="sequence_owner", type_=str, primary_key=True)

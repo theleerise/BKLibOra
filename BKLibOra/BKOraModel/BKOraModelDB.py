@@ -1,4 +1,4 @@
-from BKLibOra.BKOraModel.BKOraModel_utils.BKOraColums import BKOraColumn
+from BKLibOra.BKOraModel.BKOraColums import BKOraColumn
 
 class BKOraModelDB:
     def __init__(self, **kwargs):

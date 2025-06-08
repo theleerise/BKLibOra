@@ -1,5 +1,5 @@
 from BKLibOra.BKOraModel.BKOraModelDB import BKOraModelDB
-from BKLibOra.BKOraModel.BKOraModel_utils.BKOraColums import BKOraColumn
+from BKLibOra.BKOraModel.BKOraColums import BKOraColumn
 
 class ModelTableStructure(BKOraModelDB):
     owner = BKOraColumn(name="owner", type_=str, primary_key=True)

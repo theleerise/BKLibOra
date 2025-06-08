@@ -1,5 +1,5 @@
 from BKLibOra.BKOraModel.BKOraModelDB import BKOraModelDB
-from BKLibOra.BKOraModel.BKOraModel_utils.BKOraColums import BKOraColumn
+from BKLibOra.BKOraModel.BKOraColums import BKOraColumn
 
 class ModelJobScheduler_StatusWithErrorInfo(BKOraModelDB):
     job_name = BKOraColumn(name="job_name", type_=str, primary_key=True)

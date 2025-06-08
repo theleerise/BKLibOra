@@ -1,5 +1,5 @@
 from BKLibOra.BKOraModel.BKOraModelDB import BKOraModelDB
-from BKLibOra.BKOraModel.BKOraModel_utils.BKOraColums import BKOraColumn
+from BKLibOra.BKOraModel.BKOraColums import BKOraColumn
 
 class ModelAllSessionActive(BKOraModelDB):
     sid = BKOraColumn(name="sid", type_=int, primary_key=True)
