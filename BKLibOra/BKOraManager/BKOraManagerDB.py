@@ -36,11 +36,13 @@ Métodos abstractos que deben ser implementados por la subclase:
     - get_sql_delete()
 """
 
+from BKLibOra.config import PAGE_VALUES
 from BKLibOra.BKOraManager.BKOraManager import BKOraManager
 from BKLibOra.BKOraManager.BKOraManager_utils import counter_row_query, range_row_query
 from sqlalchemy.orm import sessionmaker
 from abc import ABC, abstractmethod
 import time
+import copy
 
 
 class BKOraManagerDB(BKOraManager):
@@ -70,10 +72,7 @@ class BKOraManagerDB(BKOraManager):
         before_delete(params): Lógica previa a la ejecución de un DELETE.
         after_delete(params): Lógica posterior a la ejecución de un DELETE.
     """
-    DEFAULT_KWARGS = {
-        "rows_page": 20,
-        "row_page_tab" : 5
-    }
+    DEFAULT_KWARGS = copy.deepcopy(PAGE_VALUES)
 
     def __init__(self, connector, model, *args, **kwargs):
         """

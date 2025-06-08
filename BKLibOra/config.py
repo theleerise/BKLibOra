@@ -46,3 +46,8 @@ MAX_VALUES = {
     "clob": None,    # CLOB puede ser muy grande, sin límite específico
     "blob": None     # BLOB puede ser muy grande, sin límite específico
 }
+
+PAGE_VALUES = {
+    "rows_page": 20,
+    "row_page_tab" : 5
+}
