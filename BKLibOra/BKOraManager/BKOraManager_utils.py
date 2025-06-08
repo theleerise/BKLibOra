@@ -1,3 +1,5 @@
+from sqlalchemy.orm import sessionmaker
+
 def counter_row_query(query: str) -> str:
     """
     Genera una sub-consulta que devuelve el número total de filas
@@ -63,3 +65,55 @@ def range_row_query(query: str, offset: int, limit: int) -> str:
         OFFSET {offset} ROWS FETCH NEXT {limit} ROWS ONLY
     """
     return format_query
+
+class BKOraRoutineExecutor:
+    """Proporciona call_procedure y call_function.
+
+    Requiere que la clase que lo use exponga:
+      * self.session_scope()
+      * self.fetch_one()
+    """
+    def call_procedure(self, proc_name:str, params: dict|None=None, session: sessionmaker|None=None):
+        """
+        Ejecuta un procedimiento almacenado en Oracle.
+
+        Args:
+            proc_name (str): Nombre del procedimiento.
+            params (dict, opcional): Parámetros a pasar. Admite entrada y salida.
+
+        Ejemplo:
+            call_procedure("my_proc", {"p_id": 1, "p_out": outparam})
+        """
+        params = params or {}
+        if not isinstance(params, dict):
+            raise ValueError("Los parámetros deben ser un diccionario")
+
+        placeholders = ', '.join(f':{k}' for k in params)
+        sql = f"BEGIN {proc_name}({placeholders}); END;"
+
+        if session:
+            session.execute(sql, params)
+        else:
+            with self.session_scope() as session:
+                session.execute(sql, params)
+
+    def call_function(self, func_name:str, params: dict|None=None, session: sessionmaker|None=None):
+        """
+        Ejecuta una función almacenada que retorna un escalar.
+
+        Args:
+            func_name (str): Nombre de la función.
+            params (dict, opcional): Parámetros de entrada.
+    
+        Returns:
+            Resultado de la función (valor escalar).
+        """
+        params = params or {}
+        if not isinstance(params, dict):
+            raise ValueError("Los parámetros deben ser un diccionario")
+
+        placeholders = ', '.join(f':{k}' for k in params)
+        sql = f"SELECT {func_name}({placeholders}) AS result FROM DUAL"
+
+        result = self.fetch_one(sql, params, sess=session)
+        return result.get('result') if result else None

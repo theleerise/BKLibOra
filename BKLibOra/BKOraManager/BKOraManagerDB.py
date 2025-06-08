@@ -38,14 +38,14 @@ Métodos abstractos que deben ser implementados por la subclase:
 
 from BKLibOra.config import PAGE_VALUES
 from BKLibOra.BKOraManager.BKOraManager import BKOraManager
-from BKLibOra.BKOraManager.BKOraManager_utils import counter_row_query, range_row_query
+from BKLibOra.BKOraManager.BKOraManager_utils import counter_row_query, range_row_query, BKOraRoutineExecutor
 from sqlalchemy.orm import sessionmaker
 from abc import ABC, abstractmethod
 import time
 import copy
 
 
-class BKOraManagerDB(BKOraManager):
+class BKOraManagerDB(BKOraManager, BKOraRoutineExecutor):
     """
     Clase base abstracta para manejar operaciones CRUD sobre una tabla Oracle usando un modelo.
 
@@ -385,7 +385,7 @@ class BKOraManagerDB(BKOraManager):
 
         return result_dict
 
-    def insert_model(self, objmodel: object|None=None, session: sessionmaker|None=None):
+    def insert_model(self, objmodel: object|None=None, session: sessionmaker|None=None, only: bool=False):
         """
         Inserta una instancia del modelo en la base de datos.
 
@@ -400,7 +400,10 @@ class BKOraManagerDB(BKOraManager):
         if hasattr(self, "after_insert"):
             objmodel = self.after_insert(objmodel, session=session)
 
-    def update_model(self, objmodel: object|None=None, session: sessionmaker|None=None):
+        if only:
+            return objmodel
+
+    def update_model(self, objmodel: object|None=None, session: sessionmaker|None=None, only: bool=False):
         """
         Actualiza una instancia del modelo en la base de datos.
 
@@ -415,7 +418,10 @@ class BKOraManagerDB(BKOraManager):
         if hasattr(self, "after_update"):
             objmodel = self.after_update(objmodel, session=session)
 
-    def delete_model(self, objmodel: object|None=None, session: sessionmaker|None=None):
+        if only:
+            return objmodel
+
+    def delete_model(self, objmodel: object|None=None, session: sessionmaker|None=None, only: bool=False):
         """
         Elimina una instancia del modelo en la base de datos.
 
@@ -428,7 +434,10 @@ class BKOraManagerDB(BKOraManager):
         params = objmodel.to_dict()
         self.execute(sql, params, session=session)
         if hasattr(self, "after_delete"):
-            self.after_delete(objmodel, session=session)
+            objmodel = self.after_delete(objmodel, session=session)
+
+        if only:
+            return objmodel
 
     def before_insert(self, objmodel: object|None=None, session: sessionmaker|None=None):
         """Hook opcional: lógica previa a un INSERT."""
@@ -453,48 +462,3 @@ class BKOraManagerDB(BKOraManager):
     def after_delete(self, objmodel: object|None=None, session: sessionmaker|None=None):
         """Hook opcional: lógica posterior a un DELETE."""
         return objmodel
-    
-    def call_procedure(self, proc_name:str, params: dict|None=None, session: sessionmaker|None=None):
-        """
-        Ejecuta un procedimiento almacenado en Oracle.
-
-        Args:
-            proc_name (str): Nombre del procedimiento.
-            params (dict, opcional): Parámetros a pasar. Admite entrada y salida.
-
-        Ejemplo:
-            call_procedure("my_proc", {"p_id": 1, "p_out": outparam})
-        """
-        params = params or {}
-        if not isinstance(params, dict):
-            raise ValueError("Los parámetros deben ser un diccionario")
-
-        placeholders = ', '.join(f':{k}' for k in params)
-        sql = f"BEGIN {proc_name}({placeholders}); END;"
-
-        if session:
-            session.execute(sql, params)
-        else:
-            with self.session_scope() as session:
-                session.execute(sql, params)
-
-    def call_function(self, func_name:str, params: dict|None=None, session: sessionmaker|None=None):
-        """
-        Ejecuta una función almacenada que retorna un escalar.
-
-        Args:
-            func_name (str): Nombre de la función.
-            params (dict, opcional): Parámetros de entrada.
-    
-        Returns:
-            Resultado de la función (valor escalar).
-        """
-        params = params or {}
-        if not isinstance(params, dict):
-            raise ValueError("Los parámetros deben ser un diccionario")
-
-        placeholders = ', '.join(f':{k}' for k in params)
-        sql = f"SELECT {func_name}({placeholders}) AS result FROM DUAL"
-
-        result = self.fetch_one(sql, params, sess=session)
-        return result.get('result') if result else None
