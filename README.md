@@ -7,62 +7,43 @@ BKLibOra es una librería Python para facilitar la conexión, gestión y modelad
 ```
 BKLibOra
 │   config.py
-│   __init__.py
+│   utils.py
 │
 ├───BKOraConnect
 │       BKOraConnect.py
-│       __init__.py
 │
 ├───BKOraDatabaseInfo
 │   ├───MgrdbAllPrimaryKey
-│   │       MgrdbAllPrimaryKey.py
-│   │       ModelAllPrimaryKey.py
 │   │
 │   ├───MgrdbAllSequences
-│   │       MgrdbAllSequences.py
-│   │       ModelAllSequences.py
 │   │
 │   ├───MgrdbAllSessionActive
-│   │       MgrdbAllSessionActive.py
-│   │       ModelAllSessionActive.py
 │   │
 │   ├───MgrdbAllTableDependencies
-│   │       MgrdbAllTableDependencies.py
-│   │       ModelAllTableDependencies.py
 │   │
 │   ├───MgrdbCurrentExecuteQuery
-│   │       MgrdbCurrentExecuteQuery.py
-│   │       ModelCurrentExecuteQuery.py
 │   │
 │   ├───MgrdbJobScheduler_DetailsWithProgramAndSchedule
-│   │       MgrdbJobScheduler_DetailsWithProgramAndSchedule.py
-│   │       ModelJobScheduler_DetailsWithProgramAndSchedule.py
 │   │
 │   ├───MgrdbJobScheduler_StatusWithErrorInfo
-│   │       MgrdbJobScheduler_StatusWithErrorInfo.py
-│   │       ModelJobScheduler_StatusWithErrorInfo.py
 │   │
 │   ├───MgrdbSessionLock
-│   │       MgrdbSessionLock.py
-│   │       ModelSessionLock.py
 │   │
 │   └───MgrdbTableStructure
-│           MgrdbTableStructure.py
-│           ModelTableStructure.py
 │
 ├───BKOraManager
 │       BKOraManager.py
 │       BKOraManagerDB.py
-│       __init__.py
+│       BKOraManager_utils.py
+│       BKOraQueryBuilder.py
 │
 └───BKOraModel
-    │   BKOraModel.py
-    │   BKOraModelDB.py
-    │   __init__.py
-    │
-    └───BKOraModel_utils
-            BKOraColums.py
-            __init__.py
+        BKOraColums.py
+        BKOraDataType.py
+        BKOraModel.py
+        BKOraModelComplex.py
+        BKOraModelDB.py
+
 ```
 
 
