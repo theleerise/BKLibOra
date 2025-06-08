@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="BKLibOra",  # Nombre del paquete
-    version="0.9.4",  # Versión incrementada para reflejar las nuevas funcionalidades
+    version="0.10.5",  # Versión incrementada para reflejar las nuevas funcionalidades
     author="Elieser Castro",
     author_email="bkelidireccion@gmail.com",
     description=(

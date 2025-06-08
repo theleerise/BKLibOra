@@ -1,5 +1,45 @@
 from sqlalchemy.orm import sessionmaker
 
+def wrapper_where_query(query: str) -> str:
+    """
+    Envuelve una consulta SQL arbitraria dentro de un sub-select y añade un
+    comodín `WHERE 1 = 1`, lo que facilita concatenar luego condiciones
+    adicionales sin preocuparse por la sintaxis del primer «WHERE».
+
+    Parameters
+    ----------
+    query : str
+        Cadena con la consulta SQL original que se desea encapsular.
+
+    Returns
+    -------
+    str
+        Consulta SQL formateada, lista para ampliar con cláusulas
+        `AND ...` si es necesario.
+
+    Notes
+    -----
+    - `WHERE 1 = 1` es una técnica habitual para simplificar la
+      generación dinámica de filtros: todas las condiciones siguientes se
+      introducen simplemente con `AND`.
+    - La función **no** valida ni escapa la consulta recibida; se asume
+      que `query` es una cadena SQL segura y bien formada.
+
+    Examples
+    --------
+    >>> raw_query = "SELECT id, nombre FROM clientes"
+    >>> wrapper_where_query(raw_query)
+    '\\n        SELECT * FROM (\\n            SELECT id, nombre FROM clientes\\n        ) WHERE 1=1\\n    '
+    >>> # Añadir filtros dinámicos
+    >>> final_query = wrapper_where_query(raw_query) + " AND fecha_alta >= :fecha_ini"
+    """
+    format_query = f"""
+        SELECT * FROM (
+            {query}
+        ) WHERE 1=1
+    """
+    return format_query
+
 def counter_row_query(query: str) -> str:
     """
     Genera una sub-consulta que devuelve el número total de filas
@@ -29,7 +69,6 @@ def counter_row_query(query: str) -> str:
         ) QUERY_COUNT
     """
     return format_query
-
 
 def range_row_query(query: str, offset: int, limit: int) -> str:
     """
@@ -65,6 +104,7 @@ def range_row_query(query: str, offset: int, limit: int) -> str:
         OFFSET {offset} ROWS FETCH NEXT {limit} ROWS ONLY
     """
     return format_query
+
 
 class BKOraRoutineExecutor:
     """Proporciona call_procedure y call_function.
