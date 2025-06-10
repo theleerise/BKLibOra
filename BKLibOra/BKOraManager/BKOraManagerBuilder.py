@@ -338,3 +338,81 @@ class BKOraManagerDB(BKOraManager, BKOraRoutineExecutor):
         }
 
         return result_dict
+
+    def insert_model(self, objmodel: object|None=None, dict_value: dict|None=None, session: sessionmaker|None=None, only: bool=False):
+        """
+        Inserta una instancia del modelo en la base de datos.
+
+        Args:
+            objmodel (object): Instancia del modelo a insertar.
+        """
+        sql, _ = self.get_sql_insert()
+        if hasattr(self, "before_insert"):
+            objmodel = self.before_insert(objmodel, session=session)
+        params = objmodel.to_dict()
+        self.execute(sql, params, session=session)
+        if hasattr(self, "after_insert"):
+            objmodel = self.after_insert(objmodel, session=session)
+
+        if only:
+            return objmodel
+
+    def update_model(self, objmodel: object|None=None, dict_value: dict|None=None, session: sessionmaker|None=None, only: bool=False):
+        """
+        Actualiza una instancia del modelo en la base de datos.
+
+        Args:
+            objmodel (object): Instancia del modelo a actualizar.
+        """
+        sql, _ = self.get_sql_update()
+        if hasattr(self, "before_update"):
+            objmodel = self.before_update(objmodel, session=session)
+        params = objmodel.to_dict()
+        self.execute(sql, params, session=session)
+        if hasattr(self, "after_update"):
+            objmodel = self.after_update(objmodel, session=session)
+
+        if only:
+            return objmodel
+
+    def delete_model(self, objmodel: object|None=None, dict_value: dict|None=None, session: sessionmaker|None=None, only: bool=False):
+        """
+        Elimina una instancia del modelo en la base de datos.
+
+        Args:
+            objmodel (object): Instancia del modelo a eliminar.
+        """
+        sql, _ = self.get_sql_delete()
+        if hasattr(self, "before_delete"):
+            objmodel = self.before_delete(objmodel, session=session)
+        params = objmodel.to_dict()
+        self.execute(sql, params, session=session)
+        if hasattr(self, "after_delete"):
+            objmodel = self.after_delete(objmodel, session=session)
+
+        if only:
+            return objmodel
+
+    def before_insert(self, objmodel: object|None=None, dict_value: dict|None=None, session: sessionmaker|None=None):
+        """Hook opcional: lógica previa a un INSERT."""
+        return objmodel
+
+    def after_insert(self, objmodel: object|None=None, dict_value: dict|None=None, session: sessionmaker|None=None):
+        """Hook opcional: lógica posterior a un INSERT."""
+        return objmodel
+
+    def before_update(self, objmodel: object|None=None, dict_value: dict|None=None, session: sessionmaker|None=None):
+        """Hook opcional: lógica previa a un UPDATE."""
+        return objmodel
+
+    def after_update(self, objmodel: object|None=None, dict_value: dict|None=None, session: sessionmaker|None=None):
+        """Hook opcional: lógica posterior a un UPDATE."""
+        return objmodel
+
+    def before_delete(self, objmodel: object|None=None, dict_value: dict|None=None, session: sessionmaker|None=None):
+        """Hook opcional: lógica previa a un DELETE."""
+        return objmodel
+
+    def after_delete(self, objmodel: object|None=None, dict_value: dict|None=None, session: sessionmaker|None=None):
+        """Hook opcional: lógica posterior a un DELETE."""
+        return objmodel
