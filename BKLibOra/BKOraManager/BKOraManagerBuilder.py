@@ -4,6 +4,7 @@ from BKLibOra.BKOraManager.BKOraManager_utils import wrapper_where_query, counte
 from BKLibOra.BKOraManager.BKOraQueryBuilder import BKOraQueryBuilder
 from sqlalchemy.orm import sessionmaker
 from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Tuple
 import time
 import copy
 
@@ -59,7 +60,10 @@ class BKOraManagerDB(BKOraManager, BKOraRoutineExecutor):
         """
         pass
 
-    def getlist(self, filter, params, session: sessionmaker|None=None) -> dict:
+    def getlist(self, filter: List[Dict[str, Any]]
+                , params: List[Dict[str, Any]]
+                , session: sessionmaker|None=None
+                , _close_sess: bool=False) -> dict:
         """
         Ejecuta la consulta SELECT definida por `get_sql_select()` y convierte los resultados a modelos.
 
@@ -73,9 +77,16 @@ class BKOraManagerDB(BKOraManager, BKOraRoutineExecutor):
         sql, params = qb.build()
         
         results = self.fetch_all(sql, params, sess=session)
+
+        if session and _close_sess:
+            session.close()
+
         return self.model.from_list(results)
     
-    def getlist_numerated(self, filter, params, session: sessionmaker|None=None) -> dict:
+    def getlist_numerated(self, filter: List[Dict[str, Any]]
+                          , params: List[Dict[str, Any]]
+                          , session: sessionmaker|None=None
+                          , _close_sess: bool=False) -> dict:
         """
         Devuelve todos los registros que cumple la consulta, el total de filas
         y métricas de tiempo de ejecución.
@@ -143,9 +154,15 @@ class BKOraManagerDB(BKOraManager, BKOraRoutineExecutor):
             }
         }
 
+        if session and _close_sess:
+            session.close()
+
         return result_dict
 
-    def getlist_paginated(self, filter, params, session: sessionmaker|None=None) -> dict:
+    def getlist_paginated(self, filter: List[Dict[str, Any]]
+                          , params: List[Dict[str, Any]]
+                          , session: sessionmaker|None=None
+                          , _close_sess: bool=False) -> dict:
         """
         Obtiene todos los registros pero los divide en páginas de tamaño fijo.
 
@@ -214,9 +231,16 @@ class BKOraManagerDB(BKOraManager, BKOraRoutineExecutor):
             }
         }
 
+        if session and _close_sess:
+            session.close()
+
         return result_dict
 
-    def getlist_page(self, filter, params, page_range: dict|None=None, session: sessionmaker|None=None) -> dict:
+    def getlist_page(self, filter: List[Dict[str, Any]]
+                     , params: List[Dict[str, Any]]
+                     , page_range: dict|None=None
+                     , session: sessionmaker|None=None
+                     , _close_sess: bool=False) -> dict:
         """
         Devuelve solo la página solicitada mediante límites ``OFFSET``/``LIMIT``.
 
@@ -281,9 +305,16 @@ class BKOraManagerDB(BKOraManager, BKOraRoutineExecutor):
             }
         }
 
+        if session and _close_sess:
+            session.close()
+
         return result_dict
 
-    def getlist_range(self, filter, params, _range: tuple|None=None, session: sessionmaker|None=None):
+    def getlist_range(self, filter: List[Dict[str, Any]]
+                      , params: List[Dict[str, Any]]
+                      , _range: tuple|None=None
+                      , session: sessionmaker|None=None
+                      , _close_sess: bool=False) -> dict:
         """
         Recupera los registros comprendidos en el rango dado
         (basado en *OFFSET* y *LIMIT*).
@@ -337,9 +368,16 @@ class BKOraManagerDB(BKOraManager, BKOraRoutineExecutor):
             }
         }
 
+        if session and _close_sess:
+            session.close()
+
         return result_dict
 
-    def insert_model(self, objmodel: object|None=None, dict_value: dict|None=None, session: sessionmaker|None=None, only: bool=False):
+    def insert_model(self, objmodel: object|None=None
+                     , dict_value: dict|None=None
+                     , session: sessionmaker|None=None
+                     , _close_sess: bool=False
+                     , only: bool=False):
         """
         Inserta una instancia del modelo en la base de datos.
 
@@ -348,16 +386,28 @@ class BKOraManagerDB(BKOraManager, BKOraRoutineExecutor):
         """
         sql, _ = self.get_sql_insert()
         if hasattr(self, "before_insert"):
-            objmodel = self.before_insert(objmodel, session=session)
+            objmodel, dict_value = self.before_insert(objmodel, dict_value, session=session)
         params = objmodel.to_dict()
         self.execute(sql, params, session=session)
         if hasattr(self, "after_insert"):
-            objmodel = self.after_insert(objmodel, session=session)
+            objmodel, dict_value = self.after_insert(objmodel, dict_value, session=session)
+
+        if session and _close_sess:
+            try:
+                session.commit()
+            except:
+                session.rollback()
+            finally:
+                session.close()
 
         if only:
             return objmodel
 
-    def update_model(self, objmodel: object|None=None, dict_value: dict|None=None, session: sessionmaker|None=None, only: bool=False):
+    def update_model(self, objmodel: object|None=None
+                     , dict_value: dict|None=None
+                     , session: sessionmaker|None=None
+                     , _close_sess: bool=False
+                     , only: bool=False):
         """
         Actualiza una instancia del modelo en la base de datos.
 
@@ -366,16 +416,28 @@ class BKOraManagerDB(BKOraManager, BKOraRoutineExecutor):
         """
         sql, _ = self.get_sql_update()
         if hasattr(self, "before_update"):
-            objmodel = self.before_update(objmodel, session=session)
+            objmodel, dict_value = self.before_update(objmodel, dict_value, session=session)
         params = objmodel.to_dict()
         self.execute(sql, params, session=session)
         if hasattr(self, "after_update"):
-            objmodel = self.after_update(objmodel, session=session)
+            objmodel, dict_value = self.after_update(objmodel, dict_value, session=session)
+
+        if session and _close_sess:
+            try:
+                session.commit()
+            except:
+                session.rollback()
+            finally:
+                session.close()
 
         if only:
             return objmodel
 
-    def delete_model(self, objmodel: object|None=None, dict_value: dict|None=None, session: sessionmaker|None=None, only: bool=False):
+    def delete_model(self, objmodel: object|None=None
+                     , dict_value: dict|None=None
+                     , session: sessionmaker|None=None
+                     , _close_sess: bool=False
+                     , only: bool=False):
         """
         Elimina una instancia del modelo en la base de datos.
 
@@ -384,35 +446,55 @@ class BKOraManagerDB(BKOraManager, BKOraRoutineExecutor):
         """
         sql, _ = self.get_sql_delete()
         if hasattr(self, "before_delete"):
-            objmodel = self.before_delete(objmodel, session=session)
+            objmodel, dict_value = self.before_delete(objmodel, dict_value, session=session)
         params = objmodel.to_dict()
         self.execute(sql, params, session=session)
         if hasattr(self, "after_delete"):
-            objmodel = self.after_delete(objmodel, session=session)
+            objmodel, dict_value = self.after_delete(objmodel, dict_value, session=session)
+
+        if session and _close_sess:
+            try:
+                session.commit()
+            except:
+                session.rollback()
+            finally:
+                session.close()
 
         if only:
             return objmodel
 
-    def before_insert(self, objmodel: object|None=None, dict_value: dict|None=None, session: sessionmaker|None=None):
+    def before_insert(self, objmodel: object|None=None
+                      , dict_value: dict|None=None
+                      , session: sessionmaker|None=None):
         """Hook opcional: lógica previa a un INSERT."""
-        return objmodel
+        return objmodel, dict_value
 
-    def after_insert(self, objmodel: object|None=None, dict_value: dict|None=None, session: sessionmaker|None=None):
+    def after_insert(self, objmodel: object|None=None
+                     , dict_value: dict|None=None
+                     , session: sessionmaker|None=None):
         """Hook opcional: lógica posterior a un INSERT."""
-        return objmodel
+        return objmodel, dict_value
 
-    def before_update(self, objmodel: object|None=None, dict_value: dict|None=None, session: sessionmaker|None=None):
+    def before_update(self, objmodel: object|None=None
+                      , dict_value: dict|None=None
+                      , session: sessionmaker|None=None):
         """Hook opcional: lógica previa a un UPDATE."""
-        return objmodel
+        return objmodel, dict_value
 
-    def after_update(self, objmodel: object|None=None, dict_value: dict|None=None, session: sessionmaker|None=None):
+    def after_update(self, objmodel: object|None=None
+                     , dict_value: dict|None=None
+                     , session: sessionmaker|None=None):
         """Hook opcional: lógica posterior a un UPDATE."""
-        return objmodel
+        return objmodel, dict_value
 
-    def before_delete(self, objmodel: object|None=None, dict_value: dict|None=None, session: sessionmaker|None=None):
+    def before_delete(self, objmodel: object|None=None
+                      , dict_value: dict|None=None
+                      , session: sessionmaker|None=None):
         """Hook opcional: lógica previa a un DELETE."""
-        return objmodel
+        return objmodel, dict_value
 
-    def after_delete(self, objmodel: object|None=None, dict_value: dict|None=None, session: sessionmaker|None=None):
+    def after_delete(self, objmodel: object|None=None
+                     , dict_value: dict|None=None
+                     , session: sessionmaker|None=None):
         """Hook opcional: lógica posterior a un DELETE."""
-        return objmodel
+        return objmodel, dict_value
