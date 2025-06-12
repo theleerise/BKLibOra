@@ -109,3 +109,52 @@ class BKOraQueryBuilder:
         self._params[lower_bind], self._params[upper_bind] = values
         clause = f"AND {sql_col} BETWEEN :{lower_bind} AND :{upper_bind}"
         self._where_clauses.append(clause)
+
+"""
+# ------------------------------------------------------------------
+# Ejemplos de uso
+# ------------------------------------------------------------------
+examples = []
+
+# 1. Igualdad simple
+base_sql_1 = "SELECT * FROM pedidos WHERE 1=1"
+filters_1 = [{"column": "estado"}]
+values_1 = [{"estado": "ACTIVO"}]
+qb1 = BKOraQueryBuilder(base_sql_1, filters_1, values_1)
+sql1, params1 = qb1.build()
+examples.append(
+    {"Ejemplo": "Igualdad simple", "SQL resultante": sql1, "Parámetros": params1}
+)
+
+# 2. Filtro IN con múltiples valores
+base_sql_2 = "SELECT * FROM productos WHERE 1=1"
+filters_2 = [{"column": "categoria"}]
+values_2 = [{"categoria": "LIBROS"}, {"categoria": "MÚSICA"}, {"categoria": "JUEGOS"}]
+qb2 = BKOraQueryBuilder(base_sql_2, filters_2, values_2)
+sql2, params2 = qb2.build()
+examples.append(
+    {"Ejemplo": "Filtro IN", "SQL resultante": sql2, "Parámetros": params2}
+)
+
+# 3. Rango BETWEEN
+base_sql_3 = "SELECT * FROM ventas WHERE 1=1"
+filters_3 = [{"column": "fecha", "condition": {"operator": "between"}}]
+values_3 = [{"fecha": "2025-01-01"}, {"fecha": "2025-01-31"}]
+qb3 = BKOraQueryBuilder(base_sql_3, filters_3, values_3)
+sql3, params3 = qb3.build()
+examples.append(
+    {"Ejemplo": "Rango BETWEEN", "SQL resultante": sql3, "Parámetros": params3}
+)
+
+# 4. LIKE con función UPPER
+base_sql_4 = "SELECT * FROM clientes WHERE 1=1"
+filters_4 = [
+    {"column": "nombre", "condition": {"operator": "like", "function": "UPPER"}}
+]
+values_4 = [{"nombre": "%GÓMEZ%"}]
+qb4 = BKOraQueryBuilder(base_sql_4, filters_4, values_4)
+sql4, params4 = qb4.build()
+examples.append(
+    {"Ejemplo": "LIKE + UPPER", "SQL resultante": sql4, "Parámetros": params4}
+)
+"""
