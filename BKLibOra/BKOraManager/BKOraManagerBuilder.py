@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Tuple
 import time
 import copy
 
-class BKOraManagerDB(BKOraManager, BKOraRoutineExecutor):
+class BKOraManagerBuilder(BKOraManager, BKOraRoutineExecutor):
     
     DEFAULT_KWARGS = copy.deepcopy(PAGE_VALUES)
     
