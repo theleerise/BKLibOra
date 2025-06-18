@@ -85,7 +85,7 @@ resultado = manager.execute_query("SELECT * FROM empleados")
 
 # Convertir a lista de diccionarios
 modelo = BKOraModel(resultado)
-data = modelo.as_dict_list()
+data = modelo.to_dict()
 
 print(data)
 ```
